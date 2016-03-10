@@ -1,0 +1,17 @@
+sudo: false
+
+language: go
+
+go:
+ - 1.6
+ - tip
+
+install:
+  - go get github.com/siddontang/ledisdb/ledis
+
+script:
+  - go test ./... -v
+
+notifications:
+  email:
+    - travis@deluan.com
