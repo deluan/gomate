@@ -1,15 +1,15 @@
 package gomate
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 )
 
-type Indexer interface {
-	Index(key string, doc string) error
-}
-
 const defaultNamespace = "gomate-index"
+
+type Indexer interface {
+	Index(id string, doc string) error
+}
 
 type indexer struct {
 	namespace string
@@ -26,7 +26,7 @@ func NewIndexer(db DB, namespace ...string) Indexer {
 	return i
 }
 
-func (i indexer) Index(key string, doc string) error {
+func (i indexer) Index(id string, doc string) error {
 	terms := strings.Split(doc, " ")
 
 	for _, t := range terms {
@@ -52,7 +52,7 @@ func generatePrefixes(term string) []string {
 		return []string{}
 	}
 
-	ps := make([]string, 0, l - 1)
+	ps := make([]string, 0, l-1)
 	for i := 2; i < l; i++ {
 		ps = append(ps, term[0:i])
 	}

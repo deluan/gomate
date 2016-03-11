@@ -2,6 +2,7 @@ package gomate
 
 import (
 	"testing"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -38,8 +39,12 @@ type mockDB struct {
 }
 
 func (db *mockDB) Zadd(key string, pairs ...ScorePair) error {
-	if db.keys == nil { db.keys = make(map[string][]ScorePair)}
-	if db.keys[key] == nil { db.keys[key] = make([]ScorePair, 0) }
+	if db.keys == nil {
+		db.keys = make(map[string][]ScorePair)
+	}
+	if db.keys[key] == nil {
+		db.keys[key] = make([]ScorePair, 0)
+	}
 	db.keys[key] = append(db.keys[key], pairs...)
 	return nil
 }
@@ -65,4 +70,3 @@ func TestIndex(t *testing.T) {
 		})
 	})
 }
-
