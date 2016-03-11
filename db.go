@@ -13,7 +13,7 @@ const (
 
 type DB interface {
 	Zadd(key string, pairs ...ScorePair) error
-	Zrevrange(key string, start int, stop int) ([]ScorePair, error)
+	Zrange(key string, start int, stop int) ([]ScorePair, error)
 	Zinterstore(destKey string, srcKeys []string, aggregate byte) (int64, error)
 	Zclear(key string) (int64, error)
 	Zkeyexists(key string) (bool, error)

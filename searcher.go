@@ -8,7 +8,7 @@ import (
 const CacheTimeOut = 600
 
 type Searcher interface {
-	Search(query string) ([]string, error)
+	Search(query string, min int, max int) ([]string, error)
 }
 
 type searcher struct {
@@ -26,7 +26,7 @@ func NewSearcher(db DB, namespace ...string) Searcher {
 	return i
 }
 
-func (s searcher) Search(query string) ([]string, error) {
+func (s searcher) Search(query string, min int, max int) ([]string, error) {
 	query = strings.TrimSpace(query)
 	var resp []ScorePair
 	var err error
@@ -43,7 +43,7 @@ func (s searcher) Search(query string) ([]string, error) {
 		}
 	}
 
-	resp, err = s.db.Zrevrange(finalIdx, 0, -1)
+	resp, err = s.db.Zrange(finalIdx, min, max)
 	if err != nil {
 		return nil, err
 	}
