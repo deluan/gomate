@@ -18,6 +18,7 @@ var (
 func db() *ledis.DB {
 	once.Do(func() {
 		config := config.NewConfigDefault()
+		config.DBName = "memory"
 		config.DataDir = "tmp-gomate-test"
 		l, _ := ledis.Open(config)
 		instance, err := l.Select(0)
