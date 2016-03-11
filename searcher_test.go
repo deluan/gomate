@@ -43,13 +43,14 @@ func TestSearcher(t *testing.T) {
 	db := NewLedisEmbeddedDB(db())
 	idx := NewIndexer(db)
 	s := NewSearcher(db)
-	SkipConvey("Given an index with a single word document", t, func() {
-		doc := "single"
+	Convey("Given an index with a single small word document", t, func() {
+		doc := "ab"
 		idx.Index("1", doc)
 		Convey("When I search for that word", func() {
-			res, err := s.Search("single")
+			res, err := s.Search("ab")
 			Convey("Then I get the id for that doc", func() {
 				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 1)
 				So(res[0], ShouldEqual, "1")
 			})
 		})
@@ -58,4 +59,110 @@ func TestSearcher(t *testing.T) {
 		})
 	})
 
+	Convey("Given an index with a single word document", t, func() {
+		doc := "single"
+		idx.Index("2", doc)
+		Convey("When I search for that specific word", func() {
+			res, err := s.Search("single")
+			Convey("Then I get the id for that doc", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 1)
+				So(res[0], ShouldEqual, "2")
+			})
+		})
+		Convey("When I search for the first 2 chars of that word", func() {
+			res, err := s.Search("si")
+			Convey("Then I get the id for that doc", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 1)
+				So(res[0], ShouldEqual, "2")
+			})
+		})
+		Reset(func() {
+			dropDb()
+		})
+	})
+
+	Convey("Given an index with a two words document", t, func() {
+		doc := "joy division"
+		idx.Index("3", doc)
+		Convey("When I search for a non-matching", func() {
+			res, err := s.Search("new")
+			Convey("Then I get an empty result", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 0)
+			})
+		})
+		Convey("When I search for one of the words", func() {
+			res, err := s.Search("division")
+			Convey("Then I get the id for that doc", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 1)
+				So(res[0], ShouldEqual, "3")
+			})
+		})
+		Convey("When I search for the first 2 chars of one of the words", func() {
+			res, err := s.Search("jo")
+			Convey("Then I get the id for that doc", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 1)
+				So(res[0], ShouldEqual, "3")
+			})
+		})
+		Convey("When I search for the first 2 chars of each word", func() {
+			res, err := s.Search("jo di")
+			Convey("Then I get the id for that doc", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 1)
+				So(res[0], ShouldEqual, "3")
+			})
+		})
+		Reset(func() {
+			dropDb()
+		})
+	})
+	Convey("Given an index with some documents", t, func() {
+		idx.Index("1", "echo & the bunnymen")
+		idx.Index("2", "erasure")
+		idx.Index("3", "echoes of an era")
+		Convey("When I search for one of the words", func() {
+			res, err := s.Search("bunnymen")
+			Convey("Then I get the id for that doc", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 1)
+				So(res[0], ShouldEqual, "1")
+			})
+		})
+		Convey("When I search for a matching prefix for two docs", func() {
+			res, err := s.Search("ech")
+			Convey("Then I get the id for that both docs", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 2)
+				So(res, ShouldContain, "1")
+				So(res, ShouldContain, "3")
+			})
+		})
+		Convey("When I search for a word that matchs a whole word and a partial word for different docs", func() {
+			res, err := s.Search("era")
+			Convey("Then I get the id for that both docs", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 2)
+				So(res, ShouldContain, "2")
+				So(res, ShouldContain, "3")
+			})
+			Convey("And I got the doc with the matching word first", func() {
+				So(res[0], ShouldEqual, "3")
+			})
+		})
+		Convey("When I search for a non-matching combination", func() {
+			res, err := s.Search("bunny era")
+			Convey("Then I get no documents back", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 0)
+			})
+		})
+		Reset(func() {
+			dropDb()
+		})
+	})
 }
