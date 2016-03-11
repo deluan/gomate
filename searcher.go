@@ -25,30 +25,19 @@ func NewSearcher(db DB, namespace ...string) Searcher {
 }
 
 func (s searcher) Search(query string) ([]string, error) {
+	query = strings.TrimSpace(query)
 	var resp []ScorePair
 	var err error
 	var finalIdx string
 
 	terms := strings.Split(query, " ")
-	idxs := make([]string, len(terms))
-	for i, t := range terms {
-		idxs[i] = keyForTerm(s.namespace, t)
-	}
 
 	if len(terms) == 1 {
-		finalIdx = idxs[0]
+		finalIdx = keyForTerm(s.namespace, query)
 	} else {
-		sort.Strings(terms)
-		final := strings.Join(terms, "|")
-		finalIdx = keyForTerm(s.namespace, final)
-
-		r, err := s.db.Zinterstore(finalIdx, idxs, AggregateSum)
-		if err != nil {
+		finalIdx, err = s.multiWordQuery(terms)
+		if finalIdx == "" {
 			return nil, err
-		}
-
-		if r == 0 {
-			return nil, nil
 		}
 	}
 
@@ -62,4 +51,24 @@ func (s searcher) Search(query string) ([]string, error) {
 		r[i] = p.Member
 	}
 	return r, nil
+}
+
+func (s searcher) multiWordQuery(terms []string) (string, error) {
+	idxs := make([]string, len(terms))
+	for i, t := range terms {
+		idxs[i] = keyForTerm(s.namespace, t)
+	}
+
+	sort.Strings(terms)
+	final := strings.Join(terms, "|")
+	finalIdx := keyForTerm(s.namespace, final)
+
+	r, err := s.db.Zinterstore(finalIdx, idxs, AggregateSum)
+	if err != nil {
+		return "", err
+	}
+	if r == 0 {
+		return "", nil
+	}
+	return finalIdx, nil
 }

@@ -33,6 +33,7 @@ func NewIndexer(db DB, namespace ...string) Indexer {
 }
 
 func (i indexer) Index(id string, doc string) error {
+	doc = strings.TrimSpace(doc)
 	terms := strings.Split(doc, " ")
 
 	for _, t := range terms {
