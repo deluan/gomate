@@ -64,8 +64,8 @@ func TestIndex(t *testing.T) {
 			Convey("And it whould add one key for each prefix", func() {
 				So(db.keys, ShouldHaveLength, 5)
 			})
-			Convey("And the key that matches the whole word should have score 1", func() {
-				So(db.keys["gomate-index:terms:single"][0].Score, ShouldEqual, 1)
+			Convey("And the key that matches the whole word should be the first result", func() {
+				So(db.keys["gomate-index:terms:single"][0].Score, ShouldEqual, 0)
 				So(db.keys["gomate-index:terms:single"][0].Member, ShouldEqual, "1")
 			})
 		})
