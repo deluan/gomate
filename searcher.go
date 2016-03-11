@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const CacheTimeOut = 600
+
 type Searcher interface {
 	Search(query string) ([]string, error)
 }
@@ -54,14 +56,19 @@ func (s searcher) Search(query string) ([]string, error) {
 }
 
 func (s searcher) multiWordQuery(terms []string) (string, error) {
+	sort.Strings(terms)
+	final := strings.Join(terms, "|")
+	finalIdx := keyForCache(s.namespace, final)
+
+	exists, err := s.db.Zkeyexists(finalIdx)
+	if exists && err == nil {
+		return finalIdx, nil
+	}
+
 	idxs := make([]string, len(terms))
 	for i, t := range terms {
 		idxs[i] = keyForTerm(s.namespace, t)
 	}
-
-	sort.Strings(terms)
-	final := strings.Join(terms, "|")
-	finalIdx := keyForTerm(s.namespace, final)
 
 	r, err := s.db.Zinterstore(finalIdx, idxs, AggregateSum)
 	if err != nil {
@@ -70,5 +77,6 @@ func (s searcher) multiWordQuery(terms []string) (string, error) {
 	if r == 0 {
 		return "", nil
 	}
+	s.db.Zexpire(finalIdx, CacheTimeOut)
 	return finalIdx, nil
 }

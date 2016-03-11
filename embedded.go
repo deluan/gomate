@@ -45,6 +45,15 @@ func (l LedisEmbeddedDB) Zclear(key string) (int64, error) {
 	return l.db.ZClear([]byte(key))
 }
 
+func (l LedisEmbeddedDB) Zkeyexists(key string) (bool, error) {
+	resp, err := l.db.ZKeyExists([]byte(key))
+	return resp == 1, err
+}
+
+func (l LedisEmbeddedDB) Zexpire(key string, duration int64) (int64, error) {
+	return l.db.ZExpire([]byte(key), duration)
+}
+
 func (l LedisEmbeddedDB) Sadd(key string, members ...string) (int64, error) {
 	ms := make([][]byte, len(members))
 	for i, m := range members {

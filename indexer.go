@@ -90,3 +90,7 @@ func generatePrefixes(term string) []string {
 func keyForTerm(ns string, term string) string {
 	return fmt.Sprintf("%s:terms:%s", ns, term)
 }
+
+func keyForCache(ns string, term string) string {
+	return fmt.Sprintf("%s:cache:%s", ns, term)
+}
