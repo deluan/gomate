@@ -66,6 +66,7 @@ func TestIndex(t *testing.T) {
 			})
 			Convey("And the key that matches the whole word should have score 1", func() {
 				So(db.keys["gomate-index:terms:single"][0].Score, ShouldEqual, 1)
+				So(db.keys["gomate-index:terms:single"][0].Member, ShouldEqual, "1")
 			})
 		})
 	})

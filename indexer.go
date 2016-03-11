@@ -30,13 +30,13 @@ func (i indexer) Index(id string, doc string) error {
 	terms := strings.Split(doc, " ")
 
 	for _, t := range terms {
-		p := ScorePair{Score: 1, Member: t}
+		p := ScorePair{Score: 1, Member: id}
 		err := i.db.Zadd(i.keyForTerm(t), p)
 		if err != nil {
 			return err
 		}
 		for _, s := range generatePrefixes(t) {
-			p := ScorePair{Score: 0, Member: s}
+			p := ScorePair{Score: 0, Member: id}
 			err := i.db.Zadd(i.keyForTerm(s), p)
 			if err != nil {
 				return err
