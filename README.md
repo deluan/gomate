@@ -1,3 +1,8 @@
+GoMate
+======
+
+[![Build Status](https://travis-ci.org/deluan/gomate.svg?branch=master)](https://travis-ci.org/deluan/gomate)
+
 Implementation of [Soulmate](https://github.com/seatgeek/soulmate)'s 
 full-text search algorithm in Go, using [LedisDB](ledisdb.com) backend
 
