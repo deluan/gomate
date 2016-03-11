@@ -33,22 +33,6 @@ func TestGeneratePrefix(t *testing.T) {
 
 }
 
-type mockDB struct {
-	DB
-	keys map[string][]ScorePair
-}
-
-func (db *mockDB) Zadd(key string, pairs ...ScorePair) error {
-	if db.keys == nil {
-		db.keys = make(map[string][]ScorePair)
-	}
-	if db.keys[key] == nil {
-		db.keys[key] = make([]ScorePair, 0)
-	}
-	db.keys[key] = append(db.keys[key], pairs...)
-	return nil
-}
-
 func TestIndex(t *testing.T) {
 	db := &mockDB{}
 	idx := NewIndexer(db)
@@ -67,6 +51,13 @@ func TestIndex(t *testing.T) {
 			Convey("And the key that matches the whole word should be the first result", func() {
 				So(db.keys["gomate-index:terms:single"][0].Score, ShouldEqual, 0)
 				So(db.keys["gomate-index:terms:single"][0].Member, ShouldEqual, "1")
+			})
+			Convey("And it should collect one key for each prefix", func() {
+				So(db.kc, ShouldHaveLength, 5)
+			})
+			Convey("And when I call Clear, it deletes all keys from the keychain", func() {
+				idx.Clear()
+				So(db.kc, ShouldHaveLength, 0)
 			})
 		})
 	})

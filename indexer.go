@@ -17,9 +17,14 @@ type Indexer interface {
 
 type indexer struct {
 	namespace string
-	keyStore  string
+	keyChain  string
 	db        DB
 }
+
+const (
+	KindSet  = "S-"
+	KindZSet = "Z-"
+)
 
 func NewIndexer(db DB, namespace ...string) Indexer {
 	i := &indexer{db: db, namespace: DefaultNamespace}
@@ -27,7 +32,7 @@ func NewIndexer(db DB, namespace ...string) Indexer {
 	if len(namespace) > 0 {
 		i.namespace = namespace[0]
 	}
-	i.keyStore = fmt.Sprintf("%s:%s", i.namespace, KeyStoreSuffix)
+	i.keyChain = fmt.Sprintf("%s:%s", i.namespace, KeyStoreSuffix)
 
 	return i
 }
@@ -37,15 +42,12 @@ func (i indexer) Index(id string, doc string) error {
 	terms := strings.Split(doc, " ")
 
 	for _, t := range terms {
-		p := ScorePair{Score: 0, Member: id}
-		err := i.db.Zadd(keyForTerm(i.namespace, t), p)
-		if err != nil {
+		if err := i.addTerm(id, t, 0); err != nil {
 			return err
 		}
+
 		for _, s := range generatePrefixes(t) {
-			p := ScorePair{Score: 1, Member: id}
-			err := i.db.Zadd(keyForTerm(i.namespace, s), p)
-			if err != nil {
+			if err := i.addTerm(id, s, 1); err != nil {
 				return err
 			}
 		}
@@ -53,24 +55,43 @@ func (i indexer) Index(id string, doc string) error {
 	return nil
 }
 
+func (i indexer) addTerm(id string, s string, score int64) error {
+	p := ScorePair{Score: score, Member: id}
+	sKey := keyForTerm(i.namespace, s)
+	err := i.db.Zadd(sKey, p)
+	if err != nil {
+		return err
+	}
+	i.collectKeys(sKey, KindZSet)
+	return nil
+}
+
 func (i indexer) Clear() error {
-	keys, err := i.db.Smembers(i.keyStore)
+	keys, err := i.db.Smembers(i.keyChain)
 	if err != nil {
 		return err
 	}
 	for _, k := range keys {
-		_, err := i.db.Zclear(k)
+		parts := strings.SplitAfterN(k, "-", 2)
+		var err error
+		switch parts[0] {
+		case KindZSet:
+			_, err = i.db.Zclear(k)
+		case KindSet:
+			_, err = i.db.Sclear(k)
+		}
+
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = i.db.Sclear(i.keyStore)
+	_, err = i.db.Sclear(i.keyChain)
 	return err
 }
 
-func (i indexer) collectKeys(key string) {
-	i.db.Sadd(i.keyStore, key)
+func (i indexer) collectKeys(key string, kind string) {
+	i.db.Sadd(i.keyChain, kind+key)
 }
 
 func generatePrefixes(term string) []string {
