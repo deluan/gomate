@@ -29,7 +29,7 @@ func (db *mockDB) Sadd(key string, member ...string) (int64, error) {
 
 func (db *mockDB) Smembers(key string) ([]string, error) {
 	m := make([]string, 0, len(db.kc))
-	for k, _ := range db.kc {
+	for k := range db.kc {
 		m = append(m, k)
 	}
 	return m, nil
