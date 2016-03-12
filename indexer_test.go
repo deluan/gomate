@@ -8,8 +8,8 @@ import (
 
 func TestGeneratePrefix(t *testing.T) {
 
-	Convey("Given a short string", t, func() {
-		doc := "ab"
+	Convey("Given a one letter string", t, func() {
+		doc := "a"
 
 		Convey("Then it returns an empty array", func() {
 			p := generatePrefixes(doc)
@@ -17,12 +17,23 @@ func TestGeneratePrefix(t *testing.T) {
 		})
 
 	})
+	Convey("Given a two letters string", t, func() {
+		doc := "ab"
+
+		Convey("Then it returns an array with only the first letter", func() {
+			p := generatePrefixes(doc)
+			So(len(p), ShouldEqual, 1)
+			So(p, ShouldContain, "a")
+		})
+
+	})
 	Convey("Given a long string, with 6 chars", t, func() {
 		doc := "abcdef"
 
-		Convey("Then it returns an array with all 4 prefixes", func() {
+		Convey("Then it returns an array with all 5 prefixes", func() {
 			p := generatePrefixes(doc)
-			So(len(p), ShouldEqual, 4)
+			So(len(p), ShouldEqual, 5)
+			So(p, ShouldContain, "a")
 			So(p, ShouldContain, "ab")
 			So(p, ShouldContain, "abc")
 			So(p, ShouldContain, "abcd")
@@ -46,14 +57,14 @@ func TestIndex(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 			Convey("And it whould add one key for each prefix", func() {
-				So(db.keys, ShouldHaveLength, 5)
+				So(db.keys, ShouldHaveLength, 6)
 			})
 			Convey("And the key that matches the whole word should be the first result", func() {
 				So(db.keys["gomate-index:terms:single"][0].Score, ShouldEqual, 0)
 				So(db.keys["gomate-index:terms:single"][0].Member, ShouldEqual, "1")
 			})
 			Convey("And it should collect one key for each prefix", func() {
-				So(db.kc, ShouldHaveLength, 5)
+				So(db.kc, ShouldHaveLength, 6)
 			})
 			Convey("And when I call Clear, it deletes all keys from the keychain", func() {
 				idx.Clear()

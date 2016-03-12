@@ -96,12 +96,12 @@ func (i indexer) collectKeys(key string, kind string) {
 
 func generatePrefixes(term string) []string {
 	l := len(term)
-	if l <= 2 {
-		return []string{}
+	if l < 2 {
+		return nil
 	}
 
 	ps := make([]string, 0, l-1)
-	for i := 2; i < l; i++ {
+	for i := 1; i < l; i++ {
 		ps = append(ps, term[0:i])
 	}
 
