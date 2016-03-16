@@ -7,7 +7,7 @@ import (
 
 const (
 	DefaultNamespace = "gomate-index"
-	KeyStoreSuffix   = "all-keys"
+	KeyChainSuffix   = "all-keys"
 )
 
 type Indexer interface {
@@ -32,7 +32,7 @@ func NewIndexer(db DB, namespace ...string) Indexer {
 	if len(namespace) > 0 {
 		i.namespace = namespace[0]
 	}
-	i.keyChain = fmt.Sprintf("%s:%s", i.namespace, KeyStoreSuffix)
+	i.keyChain = fmt.Sprintf("%s:%s", i.namespace, KeyChainSuffix)
 
 	return i
 }
@@ -76,9 +76,9 @@ func (i indexer) Clear() error {
 		var err error
 		switch parts[0] {
 		case KindZSet:
-			_, err = i.db.Zclear(k)
+			_, err = i.db.Zclear(parts[1])
 		case KindSet:
-			_, err = i.db.Sclear(k)
+			_, err = i.db.Sclear(parts[1])
 		}
 
 		if err != nil {

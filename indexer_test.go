@@ -64,11 +64,12 @@ func TestIndex(t *testing.T) {
 				So(db.keys["gomate-index:terms:single"][0].Member, ShouldEqual, "1")
 			})
 			Convey("And it should collect one key for each prefix", func() {
-				So(db.kc, ShouldHaveLength, 6)
+				So(db.set, ShouldHaveLength, 6)
 			})
 			Convey("And when I call Clear, it deletes all keys from the keychain", func() {
+				So(db.IsEmpty(), ShouldBeFalse)
 				idx.Clear()
-				So(db.kc, ShouldHaveLength, 0)
+				So(db.IsEmpty(), ShouldBeTrue)
 			})
 		})
 	})
