@@ -21,6 +21,15 @@ func (l LedisEmbeddedDB) Zadd(key string, pairs ...ScorePair) error {
 	return err
 }
 
+func (l LedisEmbeddedDB) Zrem(key string, members ...string) error {
+	ms := make([][]byte, len(members))
+	for i, k := range members {
+		ms[i] = []byte(k)
+	}
+	_, err := l.db.ZRem([]byte(key), ms...)
+	return err
+}
+
 func (l LedisEmbeddedDB) Zrange(key string, start int, stop int) ([]ScorePair, error) {
 	res, err := l.db.ZRange([]byte(key), start, stop)
 	if err != nil {

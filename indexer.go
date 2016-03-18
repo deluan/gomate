@@ -7,17 +7,20 @@ import (
 
 const (
 	DefaultNamespace = "gomate-index"
+	IdSetSuffix      = "all-ids"
 	KeyChainSuffix   = "all-keys"
 )
 
 type Indexer interface {
 	Index(id string, doc string) error
+	Remove(ids ...string) error
 	Clear() error
 }
 
 type indexer struct {
 	namespace string
 	keyChain  string
+	idSet     string
 	db        DB
 }
 
@@ -32,9 +35,18 @@ func NewIndexer(db DB, namespace ...string) Indexer {
 	if len(namespace) > 0 {
 		i.namespace = namespace[0]
 	}
-	i.keyChain = fmt.Sprintf("%s:%s", i.namespace, KeyChainSuffix)
+	i.keyChain = keyChainName(i.namespace)
+	i.idSet = idSetName(i.namespace)
 
 	return i
+}
+
+func keyChainName(namespace string) string {
+	return fmt.Sprintf("%s:%s", namespace, KeyChainSuffix)
+}
+
+func idSetName(namespace string) string {
+	return fmt.Sprintf("%s:%s", namespace, IdSetSuffix)
 }
 
 func (i indexer) Index(id string, doc string) error {
@@ -51,8 +63,17 @@ func (i indexer) Index(id string, doc string) error {
 				return err
 			}
 		}
+
+		if err := i.addId(id); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func (i indexer) addId(id string) error {
+	p := ScorePair{Score: 0, Member: id}
+	return i.db.Zadd(i.idSet, p)
 }
 
 func (i indexer) addTerm(id string, s string, score int64) error {
@@ -64,6 +85,10 @@ func (i indexer) addTerm(id string, s string, score int64) error {
 	}
 	i.collectKeys(sKey, KindZSet)
 	return nil
+}
+
+func (i indexer) Remove(ids ...string) error {
+	return i.db.Zrem(i.idSet, ids...)
 }
 
 func (i indexer) Clear() error {
@@ -86,6 +111,7 @@ func (i indexer) Clear() error {
 		}
 	}
 
+	_, err = i.db.Zclear(i.idSet)
 	_, err = i.db.Sclear(i.keyChain)
 	return err
 }

@@ -162,6 +162,16 @@ func TestSearcher(t *testing.T) {
 				So(res, ShouldHaveLength, 0)
 			})
 		})
+		Convey("When I exclude one of the documents and do a search", func() {
+			idx.Remove("1")
+			res, err := s.Search("echo", 0, -1)
+			Convey("Then the excluded doc is not returned", func() {
+				So(err, ShouldBeNil)
+				So(res, ShouldHaveLength, 1)
+				So(res, ShouldNotContain, "1")
+				So(res, ShouldContain, "3")
+			})
+		})
 		Reset(func() {
 			dropDb()
 		})

@@ -57,7 +57,8 @@ func TestIndex(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 			Convey("And it whould add one key for each prefix", func() {
-				So(db.keys, ShouldHaveLength, 6)
+				total := 5 + 2 // 2 extra for the keychain and the id set
+				So(db.keys, ShouldHaveLength, total)
 			})
 			Convey("And the key that matches the whole word should be the first result", func() {
 				So(db.keys["gomate-index:terms:single"][0].Score, ShouldEqual, 0)

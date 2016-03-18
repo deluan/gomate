@@ -34,13 +34,9 @@ func (s searcher) Search(query string, min int, max int) ([]string, error) {
 
 	terms := strings.Split(query, " ")
 
-	if len(terms) == 1 {
-		finalIdx = keyForTerm(s.namespace, query)
-	} else {
-		finalIdx, err = s.multiWordQuery(terms)
-		if finalIdx == "" {
-			return nil, err
-		}
+	finalIdx, err = s.multiWordQuery(terms)
+	if err != nil || finalIdx == "" {
+		return nil, err
 	}
 
 	resp, err = s.db.Zrange(finalIdx, min, max)
@@ -65,11 +61,11 @@ func (s searcher) multiWordQuery(terms []string) (string, error) {
 		return finalIdx, nil
 	}
 
-	idxs := make([]string, len(terms))
+	idxs := make([]string, len(terms)+1)
+	idxs[0] = idSetName(s.namespace)
 	for i, t := range terms {
-		idxs[i] = keyForTerm(s.namespace, t)
+		idxs[i+1] = keyForTerm(s.namespace, t)
 	}
-
 	r, err := s.db.Zinterstore(finalIdx, idxs, AggregateSum)
 	if err != nil {
 		return "", err
