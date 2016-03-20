@@ -34,7 +34,7 @@ func (s searcher) Search(query string, min int, max int) ([]string, error) {
 
 	terms := strings.Split(query, " ")
 
-	finalIdx, err = s.multiWordQuery(terms)
+	finalIdx, err = s.createResultSet(terms)
 	if err != nil || finalIdx == "" {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (s searcher) Search(query string, min int, max int) ([]string, error) {
 	return r, nil
 }
 
-func (s searcher) multiWordQuery(terms []string) (string, error) {
+func (s searcher) createResultSet(terms []string) (string, error) {
 	sort.Strings(terms)
 	final := strings.Join(terms, "|")
 	finalIdx := keyForCache(s.namespace, final)
@@ -67,12 +67,12 @@ func (s searcher) multiWordQuery(terms []string) (string, error) {
 		idxs[i+1] = keyForTerm(s.namespace, t)
 	}
 	r, err := s.db.Zinterstore(finalIdx, idxs, AggregateSum)
+	s.db.Zexpire(finalIdx, CacheTimeOut)
 	if err != nil {
 		return "", err
 	}
 	if r == 0 {
 		return "", nil
 	}
-	s.db.Zexpire(finalIdx, CacheTimeOut)
 	return finalIdx, nil
 }
