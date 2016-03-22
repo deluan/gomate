@@ -93,7 +93,6 @@ func (i *indexer) addTerm(id string, s string, score int64) error {
 
 func (i *indexer) Remove(ids ...string) error {
 	docs, err := i.db.Hmget(i.idSet, ids...)
-	fmt.Println("\n>>>", docs)
 	if err != nil {
 		return err
 	}
@@ -114,7 +113,6 @@ func (i *indexer) Remove(ids ...string) error {
 		}
 	}
 
-	fmt.Println(">>>", temp)
 	for s, l := range temp {
 		i.db.Zrem(keyForTerm(i.namespace, s), l...)
 	}
