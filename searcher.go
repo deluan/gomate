@@ -26,7 +26,7 @@ func NewSearcher(db DB, namespace ...string) Searcher {
 	return i
 }
 
-func (s searcher) Search(query string, min int, max int) ([]string, error) {
+func (s *searcher) Search(query string, min int, max int) ([]string, error) {
 	query = strings.TrimSpace(query)
 	var resp []ScorePair
 	var err error
@@ -51,7 +51,7 @@ func (s searcher) Search(query string, min int, max int) ([]string, error) {
 	return r, nil
 }
 
-func (s searcher) createResultSet(terms []string) (string, error) {
+func (s *searcher) createResultSet(terms []string) (string, error) {
 	sort.Strings(terms)
 	final := strings.Join(terms, "|")
 	finalIdx := keyForCache(s.namespace, final)

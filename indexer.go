@@ -49,7 +49,7 @@ func idSetName(namespace string) string {
 	return fmt.Sprintf("%s:%s", namespace, IdSetSuffix)
 }
 
-func (i indexer) Index(id string, doc string) error {
+func (i *indexer) Index(id string, doc string) error {
 	doc = strings.TrimSpace(doc)
 	terms := strings.Split(doc, " ")
 
@@ -71,12 +71,12 @@ func (i indexer) Index(id string, doc string) error {
 	return nil
 }
 
-func (i indexer) addId(id string) error {
+func (i *indexer) addId(id string) error {
 	p := ScorePair{Score: 0, Member: id}
 	return i.db.Zadd(i.idSet, p)
 }
 
-func (i indexer) addTerm(id string, s string, score int64) error {
+func (i *indexer) addTerm(id string, s string, score int64) error {
 	p := ScorePair{Score: score, Member: id}
 	sKey := keyForTerm(i.namespace, s)
 	err := i.db.Zadd(sKey, p)
@@ -87,11 +87,11 @@ func (i indexer) addTerm(id string, s string, score int64) error {
 	return nil
 }
 
-func (i indexer) Remove(ids ...string) error {
+func (i *indexer) Remove(ids ...string) error {
 	return i.db.Zrem(i.idSet, ids...)
 }
 
-func (i indexer) Clear() error {
+func (i *indexer) Clear() error {
 	keys, err := i.db.Smembers(i.keyChain)
 	if err != nil {
 		return err
@@ -116,7 +116,7 @@ func (i indexer) Clear() error {
 	return err
 }
 
-func (i indexer) collectKeys(key string, kind string) {
+func (i *indexer) collectKeys(key string, kind string) {
 	i.db.Sadd(i.keyChain, kind+key)
 }
 

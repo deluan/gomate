@@ -12,7 +12,7 @@ func NewLedisEmbeddedDB(db *ledis.DB) DB {
 	return &LedisEmbeddedDB{db: db}
 }
 
-func (l LedisEmbeddedDB) Zadd(key string, pairs ...ScorePair) error {
+func (l *LedisEmbeddedDB) Zadd(key string, pairs ...ScorePair) error {
 	ps := make([]ledis.ScorePair, len(pairs))
 	for i, p := range pairs {
 		ps[i] = ledis.ScorePair{Score: p.Score, Member: []byte(p.Member)}
@@ -21,7 +21,7 @@ func (l LedisEmbeddedDB) Zadd(key string, pairs ...ScorePair) error {
 	return err
 }
 
-func (l LedisEmbeddedDB) Zrem(key string, members ...string) error {
+func (l *LedisEmbeddedDB) Zrem(key string, members ...string) error {
 	ms := make([][]byte, len(members))
 	for i, k := range members {
 		ms[i] = []byte(k)
@@ -30,7 +30,7 @@ func (l LedisEmbeddedDB) Zrem(key string, members ...string) error {
 	return err
 }
 
-func (l LedisEmbeddedDB) Zrange(key string, start int, stop int) ([]ScorePair, error) {
+func (l *LedisEmbeddedDB) Zrange(key string, start int, stop int) ([]ScorePair, error) {
 	res, err := l.db.ZRange([]byte(key), start, stop)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (l LedisEmbeddedDB) Zrange(key string, start int, stop int) ([]ScorePair, e
 	return ps, nil
 }
 
-func (l LedisEmbeddedDB) Zinterstore(destKey string, srcKeys []string, aggregate byte) (int64, error) {
+func (l *LedisEmbeddedDB) Zinterstore(destKey string, srcKeys []string, aggregate byte) (int64, error) {
 	sk := make([][]byte, len(srcKeys))
 	for i, k := range srcKeys {
 		sk[i] = []byte(k)
@@ -50,20 +50,20 @@ func (l LedisEmbeddedDB) Zinterstore(destKey string, srcKeys []string, aggregate
 	return l.db.ZInterStore([]byte(destKey), sk, nil, aggregate)
 }
 
-func (l LedisEmbeddedDB) Zclear(key string) (int64, error) {
+func (l *LedisEmbeddedDB) Zclear(key string) (int64, error) {
 	return l.db.ZClear([]byte(key))
 }
 
-func (l LedisEmbeddedDB) Zkeyexists(key string) (bool, error) {
+func (l *LedisEmbeddedDB) Zkeyexists(key string) (bool, error) {
 	resp, err := l.db.ZKeyExists([]byte(key))
 	return resp == 1, err
 }
 
-func (l LedisEmbeddedDB) Zexpire(key string, duration int64) (int64, error) {
+func (l *LedisEmbeddedDB) Zexpire(key string, duration int64) (int64, error) {
 	return l.db.ZExpire([]byte(key), duration)
 }
 
-func (l LedisEmbeddedDB) Sadd(key string, members ...string) (int64, error) {
+func (l *LedisEmbeddedDB) Sadd(key string, members ...string) (int64, error) {
 	ms := make([][]byte, len(members))
 	for i, m := range members {
 		ms[i] = []byte(m)
@@ -71,7 +71,7 @@ func (l LedisEmbeddedDB) Sadd(key string, members ...string) (int64, error) {
 	return l.db.SAdd([]byte(key), ms...)
 }
 
-func (l LedisEmbeddedDB) Smembers(key string) ([]string, error) {
+func (l *LedisEmbeddedDB) Smembers(key string) ([]string, error) {
 	resp, err := l.db.SMembers([]byte(key))
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (l LedisEmbeddedDB) Smembers(key string) ([]string, error) {
 	return ms, nil
 }
 
-func (l LedisEmbeddedDB) Sclear(key string) (int64, error) {
+func (l *LedisEmbeddedDB) Sclear(key string) (int64, error) {
 	return l.db.SClear([]byte(key))
 }
 
