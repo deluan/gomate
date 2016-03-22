@@ -27,6 +27,7 @@ type indexer struct {
 const (
 	KindSet  = "S-"
 	KindZSet = "Z-"
+	KindHash = "H-"
 )
 
 func NewIndexer(db DB, namespace ...string) Indexer {
@@ -51,8 +52,11 @@ func idSetName(namespace string) string {
 
 func (i *indexer) Index(id string, doc string) error {
 	doc = strings.TrimSpace(doc)
-	terms := strings.Split(doc, " ")
 
+	// First remove the id if it was already indexed
+	i.Remove(id)
+
+	terms := strings.Split(doc, " ")
 	for _, t := range terms {
 		if err := i.addTerm(id, t, 0); err != nil {
 			return err
@@ -64,16 +68,16 @@ func (i *indexer) Index(id string, doc string) error {
 			}
 		}
 
-		if err := i.addId(id); err != nil {
+		if err := i.addId(id, doc); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (i *indexer) addId(id string) error {
-	p := ScorePair{Score: 0, Member: id}
-	return i.db.Zadd(i.idSet, p)
+func (i *indexer) addId(id string, doc string) error {
+	_, err := i.db.Hset(i.idSet, id, doc)
+	return err
 }
 
 func (i *indexer) addTerm(id string, s string, score int64) error {
@@ -88,7 +92,33 @@ func (i *indexer) addTerm(id string, s string, score int64) error {
 }
 
 func (i *indexer) Remove(ids ...string) error {
-	return i.db.Zrem(i.idSet, ids...)
+	docs, err := i.db.Hmget(i.idSet, ids...)
+	fmt.Println("\n>>>", docs)
+	if err != nil {
+		return err
+	}
+	temp := make(map[string][]string)
+
+	for i, doc := range docs {
+		if doc == "" {
+			continue
+		}
+		terms := strings.Split(doc, " ")
+		id := ids[i]
+		for _, t := range terms {
+			temp[t] = append(temp[t], id)
+			prefixes := generatePrefixes(t)
+			for _, s := range prefixes {
+				temp[s] = append(temp[s], id)
+			}
+		}
+	}
+
+	fmt.Println(">>>", temp)
+	for s, l := range temp {
+		i.db.Zrem(keyForTerm(i.namespace, s), l...)
+	}
+	return nil
 }
 
 func (i *indexer) Clear() error {
@@ -104,6 +134,8 @@ func (i *indexer) Clear() error {
 			_, err = i.db.Zclear(parts[1])
 		case KindSet:
 			_, err = i.db.Sclear(parts[1])
+		case KindHash:
+			_, err = i.db.Hclear(parts[1])
 		}
 
 		if err != nil {
@@ -111,7 +143,7 @@ func (i *indexer) Clear() error {
 		}
 	}
 
-	_, err = i.db.Zclear(i.idSet)
+	_, err = i.db.Hclear(i.idSet)
 	_, err = i.db.Sclear(i.keyChain)
 	return err
 }

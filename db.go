@@ -22,4 +22,7 @@ type DB interface {
 	Sadd(key string, member ...string) (int64, error)
 	Smembers(key string) ([]string, error)
 	Sclear(key string) (int64, error)
+	Hset(key, field, value string) (int64, error)
+	Hmget(key string, fields ...string) ([]string, error)
+	Hclear(key string) (int64, error)
 }

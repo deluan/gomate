@@ -45,7 +45,7 @@ func TestGeneratePrefix(t *testing.T) {
 }
 
 func TestIndex(t *testing.T) {
-	db := &mockDB{}
+	db := NewMockDB()
 	idx := NewIndexer(db)
 	Convey("Given a document with a single word", t, func() {
 		doc := "single"
@@ -57,12 +57,11 @@ func TestIndex(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 			Convey("And it whould add one key for each prefix", func() {
-				total := 5 + 2 // 2 extra for the keychain and the id set
+				total := 5 + 1 // 1 extra for the keychain
 				So(db.keys, ShouldHaveLength, total)
 			})
 			Convey("And the key that matches the whole word should be the first result", func() {
-				So(db.keys["gomate-index:terms:single"][0].Score, ShouldEqual, 0)
-				So(db.keys["gomate-index:terms:single"][0].Member, ShouldEqual, "1")
+				So(db.keys["gomate-index:terms:single"]["1"].Score, ShouldEqual, 0)
 			})
 			Convey("And it should collect one key for each prefix", func() {
 				So(db.set, ShouldHaveLength, 6)

@@ -52,6 +52,10 @@ func (s *searcher) Search(query string, min int, max int) ([]string, error) {
 }
 
 func (s *searcher) createResultSet(terms []string) (string, error) {
+	if len(terms) == 1 {
+		return keyForTerm(s.namespace, terms[0]), nil
+	}
+
 	sort.Strings(terms)
 	final := strings.Join(terms, "|")
 	finalIdx := keyForCache(s.namespace, final)
@@ -61,10 +65,9 @@ func (s *searcher) createResultSet(terms []string) (string, error) {
 		return finalIdx, nil
 	}
 
-	idxs := make([]string, len(terms)+1)
-	idxs[0] = idSetName(s.namespace)
+	idxs := make([]string, len(terms))
 	for i, t := range terms {
-		idxs[i+1] = keyForTerm(s.namespace, t)
+		idxs[i] = keyForTerm(s.namespace, t)
 	}
 	r, err := s.db.Zinterstore(finalIdx, idxs, AggregateSum)
 	s.db.Zexpire(finalIdx, CacheTimeOut)

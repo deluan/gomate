@@ -88,4 +88,29 @@ func (l *LedisEmbeddedDB) Sclear(key string) (int64, error) {
 	return l.db.SClear([]byte(key))
 }
 
+func (l *LedisEmbeddedDB) Hset(key, field, value string) (int64, error) {
+	return l.db.HSet([]byte(key), []byte(field), []byte(value))
+}
+
+func (l *LedisEmbeddedDB) Hclear(key string) (int64, error) {
+	return l.db.HClear([]byte(key))
+}
+
+func (l *LedisEmbeddedDB) Hmget(key string, fields ...string) ([]string, error) {
+	fs := make([][]byte, len(fields))
+	for i, f := range fields {
+		fs[i] = []byte(f)
+	}
+	resp, err := l.db.HMget([]byte(key), fs...)
+	if err != nil {
+		return nil, err
+	}
+	values := make([]string, len(resp))
+	for i, m := range resp {
+		values[i] = string(m)
+	}
+
+	return values, nil
+}
+
 var _ DB = (*LedisEmbeddedDB)(nil)
