@@ -20,7 +20,7 @@ type Indexer interface {
 type indexer struct {
 	namespace string
 	keyChain  string
-	idSet     string
+	idsHash   string
 	db        DB
 }
 
@@ -37,17 +37,10 @@ func NewIndexer(db DB, namespace ...string) Indexer {
 		i.namespace = namespace[0]
 	}
 	i.keyChain = keyChainName(i.namespace)
-	i.idSet = idSetName(i.namespace)
+	i.idsHash = idsHashName(i.namespace)
+	collectKeys(db, i.namespace, i.idsHash, KindHash)
 
 	return i
-}
-
-func keyChainName(namespace string) string {
-	return fmt.Sprintf("%s:%s", namespace, KeyChainSuffix)
-}
-
-func idSetName(namespace string) string {
-	return fmt.Sprintf("%s:%s", namespace, IdSetSuffix)
 }
 
 func (i *indexer) Index(id string, doc string) error {
@@ -75,24 +68,8 @@ func (i *indexer) Index(id string, doc string) error {
 	return nil
 }
 
-func (i *indexer) addId(id string, doc string) error {
-	_, err := i.db.Hset(i.idSet, id, doc)
-	return err
-}
-
-func (i *indexer) addTerm(id string, s string, score int64) error {
-	p := ScorePair{Score: score, Member: id}
-	sKey := keyForTerm(i.namespace, s)
-	err := i.db.Zadd(sKey, p)
-	if err != nil {
-		return err
-	}
-	i.collectKeys(sKey, KindZSet)
-	return nil
-}
-
 func (i *indexer) Remove(ids ...string) error {
-	docs, err := i.db.Hmget(i.idSet, ids...)
+	docs, err := i.db.Hmget(i.idsHash, ids...)
 	if err != nil {
 		return err
 	}
@@ -141,13 +118,36 @@ func (i *indexer) Clear() error {
 		}
 	}
 
-	_, err = i.db.Hclear(i.idSet)
 	_, err = i.db.Sclear(i.keyChain)
 	return err
 }
 
-func (i *indexer) collectKeys(key string, kind string) {
-	i.db.Sadd(i.keyChain, kind+key)
+func (i *indexer) addId(id string, doc string) error {
+	_, err := i.db.Hset(i.idsHash, id, doc)
+	return err
+}
+
+func (i *indexer) addTerm(id string, s string, score int64) error {
+	p := ScorePair{Score: score, Member: id}
+	sKey := keyForTerm(i.namespace, s)
+	err := i.db.Zadd(sKey, p)
+	if err != nil {
+		return err
+	}
+	collectKeys(i.db, i.namespace, sKey, KindZSet)
+	return nil
+}
+
+func keyChainName(namespace string) string {
+	return fmt.Sprintf("%s:%s", namespace, KeyChainSuffix)
+}
+
+func idsHashName(namespace string) string {
+	return fmt.Sprintf("%s:%s", namespace, IdSetSuffix)
+}
+
+func collectKeys(db DB, namespace string, key string, kind string) {
+	db.Sadd(keyChainName(namespace), kind+key)
 }
 
 func generatePrefixes(term string) []string {

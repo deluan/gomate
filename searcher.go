@@ -71,6 +71,7 @@ func (s *searcher) createResultSet(terms []string) (string, error) {
 	}
 	r, err := s.db.Zinterstore(finalIdx, idxs, AggregateSum)
 	s.db.Zexpire(finalIdx, CacheTimeOut)
+	collectKeys(s.db, s.namespace, finalIdx, KindZSet)
 	if err != nil {
 		return "", err
 	}
