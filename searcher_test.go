@@ -43,7 +43,7 @@ func TestSearcher(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
-	db := NewLedisEmbeddedDB(db())
+	db := NewEmbeddedDB(db())
 	idx := NewIndexer(db)
 	s := NewSearcher(db)
 	Convey("Given an index with a single small word document", t, func() {

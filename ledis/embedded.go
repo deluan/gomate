@@ -5,15 +5,15 @@ import (
 	"github.com/siddontang/ledisdb/ledis"
 )
 
-type LedisEmbeddedDB struct {
+type EmbeddedDB struct {
 	db *ledis.DB
 }
 
-func NewLedisEmbeddedDB(db *ledis.DB) gomate.DB {
-	return &LedisEmbeddedDB{db: db}
+func NewEmbeddedDB(db *ledis.DB) gomate.DB {
+	return &EmbeddedDB{db: db}
 }
 
-func (l *LedisEmbeddedDB) Zadd(key string, pairs ...gomate.ScorePair) error {
+func (l *EmbeddedDB) Zadd(key string, pairs ...gomate.ScorePair) error {
 	ps := make([]ledis.ScorePair, len(pairs))
 	for i, p := range pairs {
 		ps[i] = ledis.ScorePair{Score: p.Score, Member: []byte(p.Member)}
@@ -22,7 +22,7 @@ func (l *LedisEmbeddedDB) Zadd(key string, pairs ...gomate.ScorePair) error {
 	return err
 }
 
-func (l *LedisEmbeddedDB) Zrem(key string, members ...string) error {
+func (l *EmbeddedDB) Zrem(key string, members ...string) error {
 	ms := make([][]byte, len(members))
 	for i, k := range members {
 		ms[i] = []byte(k)
@@ -31,7 +31,7 @@ func (l *LedisEmbeddedDB) Zrem(key string, members ...string) error {
 	return err
 }
 
-func (l *LedisEmbeddedDB) Zrange(key string, start int, stop int) ([]gomate.ScorePair, error) {
+func (l *EmbeddedDB) Zrange(key string, start int, stop int) ([]gomate.ScorePair, error) {
 	res, err := l.db.ZRange([]byte(key), start, stop)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (l *LedisEmbeddedDB) Zrange(key string, start int, stop int) ([]gomate.Scor
 	return ps, nil
 }
 
-func (l *LedisEmbeddedDB) Zinterstore(destKey string, srcKeys []string, aggregate byte) (int64, error) {
+func (l *EmbeddedDB) Zinterstore(destKey string, srcKeys []string, aggregate byte) (int64, error) {
 	sk := make([][]byte, len(srcKeys))
 	for i, k := range srcKeys {
 		sk[i] = []byte(k)
@@ -51,20 +51,20 @@ func (l *LedisEmbeddedDB) Zinterstore(destKey string, srcKeys []string, aggregat
 	return l.db.ZInterStore([]byte(destKey), sk, nil, aggregate)
 }
 
-func (l *LedisEmbeddedDB) Zclear(key string) (int64, error) {
+func (l *EmbeddedDB) Zclear(key string) (int64, error) {
 	return l.db.ZClear([]byte(key))
 }
 
-func (l *LedisEmbeddedDB) Zkeyexists(key string) (bool, error) {
+func (l *EmbeddedDB) Zkeyexists(key string) (bool, error) {
 	resp, err := l.db.ZKeyExists([]byte(key))
 	return resp == 1, err
 }
 
-func (l *LedisEmbeddedDB) Zexpire(key string, duration int64) (int64, error) {
+func (l *EmbeddedDB) Zexpire(key string, duration int64) (int64, error) {
 	return l.db.ZExpire([]byte(key), duration)
 }
 
-func (l *LedisEmbeddedDB) Sadd(key string, members ...string) (int64, error) {
+func (l *EmbeddedDB) Sadd(key string, members ...string) (int64, error) {
 	ms := make([][]byte, len(members))
 	for i, m := range members {
 		ms[i] = []byte(m)
@@ -72,7 +72,7 @@ func (l *LedisEmbeddedDB) Sadd(key string, members ...string) (int64, error) {
 	return l.db.SAdd([]byte(key), ms...)
 }
 
-func (l *LedisEmbeddedDB) Smembers(key string) ([]string, error) {
+func (l *EmbeddedDB) Smembers(key string) ([]string, error) {
 	resp, err := l.db.SMembers([]byte(key))
 	if err != nil {
 		return nil, err
@@ -85,19 +85,19 @@ func (l *LedisEmbeddedDB) Smembers(key string) ([]string, error) {
 	return ms, nil
 }
 
-func (l *LedisEmbeddedDB) Sclear(key string) (int64, error) {
+func (l *EmbeddedDB) Sclear(key string) (int64, error) {
 	return l.db.SClear([]byte(key))
 }
 
-func (l *LedisEmbeddedDB) Hset(key, field, value string) (int64, error) {
+func (l *EmbeddedDB) Hset(key, field, value string) (int64, error) {
 	return l.db.HSet([]byte(key), []byte(field), []byte(value))
 }
 
-func (l *LedisEmbeddedDB) Hclear(key string) (int64, error) {
+func (l *EmbeddedDB) Hclear(key string) (int64, error) {
 	return l.db.HClear([]byte(key))
 }
 
-func (l *LedisEmbeddedDB) Hmget(key string, fields ...string) ([]string, error) {
+func (l *EmbeddedDB) Hmget(key string, fields ...string) ([]string, error) {
 	fs := make([][]byte, len(fields))
 	for i, f := range fields {
 		fs[i] = []byte(f)
@@ -114,4 +114,4 @@ func (l *LedisEmbeddedDB) Hmget(key string, fields ...string) ([]string, error) 
 	return values, nil
 }
 
-var _ gomate.DB = (*LedisEmbeddedDB)(nil)
+var _ gomate.DB = (*EmbeddedDB)(nil)
