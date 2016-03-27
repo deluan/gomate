@@ -1,9 +1,11 @@
-package gomate
+package gomate_test
 
 import (
 	"sync"
 	"testing"
 
+	. "github.com/deluan/gomate"
+	. "github.com/deluan/gomate/ledis"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/ledis"
 	. "github.com/smartystreets/goconvey/convey"

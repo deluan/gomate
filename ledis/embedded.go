@@ -1,6 +1,7 @@
-package gomate
+package ledis
 
 import (
+	"github.com/deluan/gomate"
 	"github.com/siddontang/ledisdb/ledis"
 )
 
@@ -8,11 +9,11 @@ type LedisEmbeddedDB struct {
 	db *ledis.DB
 }
 
-func NewLedisEmbeddedDB(db *ledis.DB) DB {
+func NewLedisEmbeddedDB(db *ledis.DB) gomate.DB {
 	return &LedisEmbeddedDB{db: db}
 }
 
-func (l *LedisEmbeddedDB) Zadd(key string, pairs ...ScorePair) error {
+func (l *LedisEmbeddedDB) Zadd(key string, pairs ...gomate.ScorePair) error {
 	ps := make([]ledis.ScorePair, len(pairs))
 	for i, p := range pairs {
 		ps[i] = ledis.ScorePair{Score: p.Score, Member: []byte(p.Member)}
@@ -30,14 +31,14 @@ func (l *LedisEmbeddedDB) Zrem(key string, members ...string) error {
 	return err
 }
 
-func (l *LedisEmbeddedDB) Zrange(key string, start int, stop int) ([]ScorePair, error) {
+func (l *LedisEmbeddedDB) Zrange(key string, start int, stop int) ([]gomate.ScorePair, error) {
 	res, err := l.db.ZRange([]byte(key), start, stop)
 	if err != nil {
 		return nil, err
 	}
-	ps := make([]ScorePair, len(res))
+	ps := make([]gomate.ScorePair, len(res))
 	for i, p := range res {
-		ps[i] = ScorePair{Score: p.Score, Member: string(p.Member)}
+		ps[i] = gomate.ScorePair{Score: p.Score, Member: string(p.Member)}
 	}
 	return ps, nil
 }
@@ -113,4 +114,4 @@ func (l *LedisEmbeddedDB) Hmget(key string, fields ...string) ([]string, error) 
 	return values, nil
 }
 
-var _ DB = (*LedisEmbeddedDB)(nil)
+var _ gomate.DB = (*LedisEmbeddedDB)(nil)
